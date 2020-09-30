@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tictactoe/controllers/game_controller.dart';
 import 'package:tictactoe/core/constants.dart';
-import 'package:tictactoe/dialogs/custom_dialog.dart';
+import 'package:tictactoe/enums/player_type.dart';
 import 'package:tictactoe/enums/winner_type.dart';
-import 'package:tictactoe/models/game_tile.dart';
+import 'package:tictactoe/widgets/custom_dialog.dart';
 
 class GamePage extends StatefulWidget {
   @override
@@ -60,22 +60,19 @@ class _GamePageState extends State<GamePage> {
           mainAxisSpacing: 10,
           crossAxisSpacing: 10,
         ),
-        itemBuilder: (context, index) {
-          final tile = _controller.tiles[index];
-          return _buildTile(tile);
-        },
+        itemBuilder: _buildTile,
       ),
     );
   }
 
-  _buildTile(GameTile tile) {
+  Widget _buildTile(context, index) {
     return GestureDetector(
-      onTap: () => _onMarkTile(tile),
+      onTap: () => _onMarkTile(index),
       child: Container(
-        color: tile.color,
+        color: _controller.tiles[index].color,
         child: Center(
           child: Text(
-            tile.symbol,
+            _controller.tiles[index].symbol,
             style: TextStyle(
               fontSize: 72.0,
               color: Colors.white,
@@ -88,15 +85,15 @@ class _GamePageState extends State<GamePage> {
 
   _onResetGame() {
     setState(() {
-      _controller.initialize();
+      _controller.reset();
     });
   }
 
-  _onMarkTile(GameTile tile) {
-    if (!tile.enable) return;
+  _onMarkTile(index) {
+    if (!_controller.tiles[index].enable) return;
 
     setState(() {
-      _controller.mark(tile);
+      _controller.markBoardTileByIndex(index);
     });
 
     _checkWinner();
@@ -107,6 +104,10 @@ class _GamePageState extends State<GamePage> {
     if (winner == WinnerType.none) {
       if (!_controller.hasMoves) {
         _showTiedDialog();
+      } else if (_controller.isSinglePlayer &&
+          _controller.currentPlayer == PlayerType.player2) {
+        final index = _controller.automaticMove();
+        _onMarkTile(index);
       }
     } else {
       String symbol =
@@ -144,6 +145,15 @@ class _GamePageState extends State<GamePage> {
   }
 
   _buildPlayerMode() {
-    return Container();
+    return SwitchListTile(
+      title: Text(_controller.isSinglePlayer ? 'Single Player' : 'Two Players'),
+      secondary: Icon(_controller.isSinglePlayer ? Icons.person : Icons.group),
+      value: _controller.isSinglePlayer,
+      onChanged: (value) {
+        setState(() {
+          _controller.isSinglePlayer = value;
+        });
+      },
+    );
   }
 }

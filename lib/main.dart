@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+
 import 'pages/game_page.dart';
 
 void main() => runApp(const MyApp());

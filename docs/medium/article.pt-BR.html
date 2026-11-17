@@ -1,0 +1,213 @@
+<figure><img src="cover.png" alt="Ilustração conceitual: tabuleiro 3 por 3 com três X na primeira linha e dois O na segunda."></figure>
+<p><em>Ilustração conceitual criada para esta aula com geração de imagem por IA. As capturas de tela adiante mostram o aplicativo real.</em></p>
+<p>Um jogo pequeno é um ótimo laboratório para aprender a separar regras, estado e interface. Nesta aula, vamos explorar um jogo da velha funcional, entender por que uma jogada é aceita ou recusada e verificar esse comportamento com testes. A implementação foi atualizada em novembro de 2026; o material original de 2020 permanece preservado no histórico do repositório.</p>
+<h2>O que você vai aprender</h2>
+<p>Ao concluir, você deverá conseguir representar um tabuleiro sem depender do Flutter, reconhecer vitória e empate, proteger o estado contra jogadas inválidas, conectar as regras à interface e distinguir reiniciar uma rodada de zerar o placar. O resultado funciona com duas pessoas no mesmo dispositivo e oferece um adversário simples para praticar sozinho.</p>
+<figure><img src="../screenshots/desktop-win.jpg" alt="Jogo real no Chrome: X vence, linha destacada e placar X com uma vitória."></figure>
+<p><em>Captura real no Chrome: vitória de X, linha destacada e placar da sessão. O resultado permanece visível até iniciar outra rodada.</em></p>
+<h2>1. Prepare um ambiente reproduzível</h2>
+<p>A base desta revisão é <strong>Flutter 3.50.0, com Dart 3.14.0</strong>. A versão do Flutter está fixada em .fvmrc e no CI. Confira <code>flutter --version</code> antes de começar. O projeto usa null safety e exige Dart ≥3.14.0 e Flutter ≥3.50.0. Use uma cópia local desse SDK ou FVM; não é necessário atualizar o SDK de outros projetos.</p>
+<p>Abra o terminal e execute os comandos abaixo. Para estudar esta aula, clone o projeto completo: os trechos seguintes explicam partes reais dos arquivos e não substituem todos os arquivos de plataforma e interface.</p>
+<pre>git clone https://github.com/kleberandrade/tic-tac-toe-flutter.git
+cd tic-tac-toe-flutter
+flutter --version
+flutter pub get --enforce-lockfile
+flutter run -d chrome</pre>
+<p>Não há cadastro, Firebase, chave de API ou dados pessoais de exemplo. Para testar uma vitória local, selecione Two players e pressione 1, 4, 2, 5, 3. X deve completar a primeira linha. Use Play again para limpar o tabuleiro mantendo X com uma vitória.</p>
+<h2>2. Entenda os pacotes e suas versões</h2>
+<p>As dependências diretas atuais são o SDK Flutter, <strong>material_ui 1.11.1</strong>, flutter_test do mesmo SDK e <strong>flutter_lints 6.0.0</strong>. O arquivo pubspec.lock registra as versões exatas. A extração do Material para o pacote oficial exige importar package:material_ui/material_ui.dart; o import antigo package:flutter/material.dart está depreciado nesta versão do Flutter. Não basta atualizar o número do SDK e ignorar o aviso.</p>
+<pre>name: tictactoe
+description: An accessible Flutter tic-tac-toe classroom app with local and computer play.
+publish_to: none
+version: 2.0.0+2
+environment:
+  sdk: &#x27;&gt;=3.14.0 &lt;4.0.0&#x27;
+  flutter: &#x27;&gt;=3.50.0&#x27;
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ^1.11.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true</pre>
+<p>A auditoria consulta todos os pacotes hospedados do lockfile no pub.dev. Entre os transitivos atualizados estão clock 1.1.3, matcher 0.12.20, meta 1.19.0, stack_trace 1.12.2 e vector_math 2.4.4. material_ui também resolve cupertino_ui 1.1.7 e intl 0.20.3. flutter_lints resolve lints 6.1.0. A lista completa, com versão resolvida e mais recente, está em docs/medium/dependency-audit.json no repositório.</p>
+<p><strong>Duas exceções precisam ficar explícitas:</strong> Flutter 3.50.0 fixa material_color_utilities em 0.13.0, embora o registro ofereça 0.13.1; flutter_test fixa test_api em 0.7.14, embora exista 0.7.15. Essas dependências não foram forçadas por dependency_overrides nem tiveram o SDK alterado. Todas as demais versões hospedadas são comparadas ao registro. Atualizar com segurança significa respeitar também os contratos do SDK, e não apenas produzir um lockfile com números maiores.</p>
+<p>Para futuras revisões, use <code>flutter pub outdated</code>, confira o changelog das dependências diretas, execute <code>flutter pub upgrade --major-versions</code> e repita os testes. flutter_lints 6.0.0 já é a versão estável mais recente verificada nesta revisão. Os plugins custom_splash e share citados na aula antiga não são dependências deste aplicativo.</p>
+<h2>3. Defina as regras antes dos widgets</h2>
+<p>O tabuleiro tem nove casas. X começa; depois de cada jogada válida, o turno muda para O ou X. Uma casa ocupada não pode receber outra marca. A rodada termina quando uma das oito linhas está completa ou quando as nove casas estão ocupadas sem vencedor. Depois do término, nenhuma nova jogada pode modificar o tabuleiro ou pontuar novamente.</p>
+<p>Vamos usar índices de 0 a 8 no domínio. A interface aceita teclas de 1 a 9, na mesma ordem visual. Evite misturar o índice interno com o número apresentado ao jogador:</p>
+<pre>Domínio:       Teclado:
+0  1  2        1  2  3
+3  4  5        4  5  6
+6  7  8        7  8  9</pre>
+<p>O enum Mark restringe as marcas a X e O. Uma casa vazia contém null. O objeto Game guarda o estado e oferece operações pequenas. O tabuleiro exposto é uma cópia não modificável: a interface pode consultar as casas, mas só play pode aceitar uma jogada. Isso evita alterar a lista por fora e esquecer de verificar vitória ou atualizar o placar.</p>
+<h2>4. Leia o modelo completo, em Dart puro</h2>
+<p>O arquivo lib/domain/game.dart abaixo não importa Flutter. Observe a ordem em play: validar a coordenada, rejeitar estado indisponível, registrar a marca, verificar a linha, pontuar o desfecho e só então trocar o turno quando a rodada continuar. Uma coordenada fora da faixa gera RangeError; uma casa indisponível retorna false sem alterar o estado.</p>
+<pre>/// The only marks on a tic-tac-toe board. X always opens a round.
+enum Mark {
+  x,
+  o;
+  Mark get other =&gt; this == x ? o : x;
+  String get label =&gt; name.toUpperCase();
+}
+const _lines = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
+];
+/// A round and its session score. No Flutter, timers, network or persistence.
+class Game {
+  final List&lt;Mark?&gt; _cells = List.filled(9, null);
+  final Map&lt;Mark, int&gt; _wins = {Mark.x: 0, Mark.o: 0};
+  Mark _turn = Mark.x;
+  Mark? _winner;
+  List&lt;int&gt; _winningCells = const [];
+  int _draws = 0;
+  List&lt;Mark?&gt; get cells =&gt; List.unmodifiable(_cells);
+  Mark get turn =&gt; _turn;
+  Mark? get winner =&gt; _winner;
+  List&lt;int&gt; get winningCells =&gt; List.unmodifiable(_winningCells);
+  int get draws =&gt; _draws;
+  int wins(Mark mark) =&gt; _wins[mark]!;
+  bool get isDraw =&gt; _winner == null &amp;&amp; !_cells.contains(null);
+  bool get isOver =&gt; _winner != null || isDraw;
+  /// Invalid coordinates are programmer errors; unavailable moves are rejected.
+  bool play(int index) {
+    RangeError.checkValidIndex(index, _cells);
+    if (isOver || _cells[index] != null) return false;
+    _cells[index] = _turn;
+    _winningCells = _lineFor(_turn);
+    if (_winningCells.isNotEmpty) {
+      _winner = _turn;
+      _wins[_turn] = wins(_turn) + 1;
+    } else if (isDraw) {
+      _draws++;
+    } else {
+      _turn = _turn.other;
+    }
+    return true;
+  }
+  List&lt;int&gt; _lineFor(Mark mark) {
+    for (final line in _lines) {
+      if (line.every((i) =&gt; _cells[i] == mark)) return line;
+    }
+    return const [];
+  }
+  void nextRound() {
+    _cells.fillRange(0, 9, null);
+    _turn = Mark.x;
+    _winner = null;
+    _winningCells = const [];
+  }
+  void resetScores() {
+    _wins.updateAll((_, _) =&gt; 0);
+    _draws = 0;
+    nextRound();
+  }
+  /// A deterministic, casual opponent: win, block, center, then first free cell.
+  /// It is deliberately beatable, not a minimax or random opponent.
+  int? computerMove() {
+    if (isOver) return null;
+    for (final mark in [_turn, _turn.other]) {
+      for (final line in _lines) {
+        final empty = line.where((i) =&gt; _cells[i] == null).toList();
+        if (empty.length == 1 &amp;&amp;
+            line.where((i) =&gt; _cells[i] == mark).length == 2) {
+          return empty.single;
+        }
+      }
+    }
+    if (_cells[4] == null) return 4;
+    return _cells.indexOf(null);
+  }
+}</pre>
+<p>A lista _lines contém três linhas, três colunas e duas diagonais. _lineFor percorre essas combinações e usa every para conferir se todas as três casas têm a marca. Em uma vitória, _winningCells permite destacar a linha sem colocar cores no domínio. A decisão sobre a cor continua pertencendo à interface.</p>
+<p>Também há duas escalas de tempo: uma rodada é um tabuleiro; uma sessão é o placar acumulado. nextRound limpa apenas a rodada. resetScores zera vitórias e empates e começa outra rodada. X inicia novamente. Os números ficam somente em memória: fechar/recarregar o aplicativo ou mudar o modo reinicia a sessão.</p>
+<h2>5. Conecte o modelo à interface</h2>
+<p>A aplicação tem três arquivos principais: lib/domain/game.dart reúne regras e placar; lib/pages/game_page.dart apresenta e recebe ações; lib/main.dart configura a aplicação e o tema. O estado de uma partida pertence à sua página, sem singleton ou variáveis globais mutáveis. Para este escopo, setState é suficiente.</p>
+<p>A entrada e o tema usam o pacote Material atual. Este é o conteúdo de lib/main.dart:</p>
+<pre>import &#x27;package:material_ui/material_ui.dart&#x27;;
+import &#x27;pages/game_page.dart&#x27;;
+void main() =&gt; runApp(const MyApp());
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+  @override
+  Widget build(BuildContext context) =&gt; MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: &#x27;Tic Tac Toe&#x27;,
+    theme: ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF146B60),
+        surface: const Color(0xFFFFFCF5),
+      ),
+      scaffoldBackgroundColor: const Color(0xFFF4F1E8),
+      textTheme: ThemeData.light().textTheme.apply(
+        bodyColor: const Color(0xFF202D2B),
+        displayColor: const Color(0xFF202D2B),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(minimumSize: const Size(48, 52)),
+      ),
+    ),
+    home: const GamePage(),
+  );
+}</pre>
+<p>Em GamePage, o manipulador abaixo encaminha a entrada ao domínio. A jogada do computador só acontece quando a jogada humana foi aceita, a rodada continua e é o turno de O. A verificação evita respostas após uma vitória e impede que clicar em casa ocupada gere outra jogada do computador.</p>
+<pre>void _play(int index) {
+    setState(() {
+      if (!_game.play(index)) return;
+      if (_computer &amp;&amp; !_game.isOver &amp;&amp; _game.turn == Mark.o) {
+        final reply = _game.computerMove();
+        if (reply != null) _game.play(reply);
+      }
+    });
+  }</pre>
+<p>O adversário é propositalmente simples e pode ser vencido: tenta completar uma linha, bloqueia uma ameaça imediata, escolhe o centro e depois a primeira casa livre. Não é Minimax e não usa sorteio. O código antigo usava <code>nextInt(list.length - 1)</code>, que excluía a última opção e falhava quando sobrava uma única casa. Nesta versão, computerMove retorna null quando a rodada terminou, e a última casa livre continua sendo uma opção válida.</p>
+<figure><img src="../screenshots/mobile-computer.jpg" alt="Jogo real em largura móvel: humano X no canto e computador O no centro."></figure>
+<p><em>Captura real no navegador em largura de celular. Modo de jogo, instrução de turno e tabuleiro usam uma coluna com rolagem. Isto não é um teste em telefone físico.</em></p>
+<p>A interface exibe turno, vitória ou empate sem obrigar o jogador a fechar um diálogo. A linha vencedora fica destacada e todas as casas são bloqueadas após o fim. Restart round / Play again mantém o placar; Reset scores o zera. Trocar entre Two players e Computer começa outra sessão. Selecionar novamente o modo ativo não apaga o resultado.</p>
+<p>Acessibilidade não se resume a cor. Cada casa informa linha, coluna e conteúdo; o resultado possui região semântica de anúncio; há foco visível e botões reais. Use Tab com Enter/Espaço ou teclas 1–9. O layout foi testado com largura de 320 pixels e texto a 200%. A descrição do estado continua compreensível sem distinguir o verde do vermelho. Uma sessão com leitor de tela ainda precisa de validação humana específica.</p>
+<h2>6. Verifique o comportamento antes de mudar a regra</h2>
+<p>Um teste útil descreve uma situação que o jogador perceberia. O exemplo abaixo pode entrar em test/game_example_test.dart. Ele comprova a vitória e o bloqueio da próxima jogada; não depende de detalhes de layout.</p>
+<pre>import &#x27;package:flutter_test/flutter_test.dart&#x27;;
+import &#x27;package:tictactoe/domain/game.dart&#x27;;
+void main() {
+  test(&#x27;X vence e a rodada deixa de aceitar jogadas&#x27;, () {
+    final game = Game();
+    for (final cell in [0, 3, 1, 4, 2]) {
+      expect(game.play(cell), isTrue);
+    }
+    expect(game.winner, Mark.x);
+    expect(game.winningCells, [0, 1, 2]);
+    expect(game.wins(Mark.x), 1);
+    expect(game.play(8), isFalse);
+    expect(game.wins(Mark.x), 1);
+  });
+}</pre>
+<p>A suíte do repositório testa as oito linhas para X e O, empate, alternância, coordenadas inválidas, casas ocupadas, lista protegida, bloqueio após o fim, reinício, placar e decisões do computador. Os testes de widgets incluem toques, teclado, modo de jogo, resultado visível e texto ampliado. Para um empate manual em Two players, reinicie e use 1, 2, 3, 5, 4, 6, 8, 7, 9.</p>
+<pre>dart format --output=none --set-exit-if-changed lib test tool
+flutter analyze --fatal-infos
+flutter test --coverage
+dart run tool/rules_example.dart
+flutter build web --no-wasm-dry-run</pre>
+<p>O exemplo de terminal exercita apenas o domínio. O build Web vai para build/web e deve ser servido por HTTP para conferir a versão de produção. O CI executa instalação com lockfile, formatação, análise, exemplo, testes e build. Consulte o README e docs/WORK_LOG.md para os resultados efetivamente observados e os limites nativos; não confunda compilação com teste físico. Android depende do SDK/JDK e das licenças aceitas pelo responsável. O projeto iOS exige iOS 15 ou superior.</p>
+<h2>Referências e continuidade</h2>
+<p>Código completo: <a href="https://github.com/kleberandrade/tic-tac-toe-flutter">github.com/kleberandrade/tic-tac-toe-flutter</a>. Autor: Kleber de Oliveira Andrade; licença MIT preservada. A edição de 2020 e seus links didáticos permanecem em <a href="https://github.com/kleberandrade/tic-tac-toe-flutter/blob/master/docs/original-project.md">docs/original-project.md</a> e no histórico Git, sem apresentar screenshots antigos como se fossem a versão atual.</p>
+<p>Para aprofundar: <a href="https://docs.flutter.dev/testing/overview">testes no Flutter</a>, <a href="https://dart.dev/null-safety">null safety no Dart</a> e a referência original sobre <a href="https://www.youtube.com/watch?v=trKjYdBASyQ">Minimax, do The Coding Train</a>. Cada material mantém sua autoria; o algoritmo não foi incorporado a este projeto.</p>
+<h2>Cinco exercícios para praticar</h2>
+<ol>
+<li><strong>Escolha de quem começa.</strong> Permita escolher X ou O antes da rodada. Critério: a opção aparece na interface, alternância e resultado continuam corretos, e há testes para ambos os jogadores iniciando. Defina se reiniciar preserva a escolha.</li>
+<li><strong>Desfazer a última jogada.</strong> Acrescente um histórico no domínio e um botão Desfazer. Critério: uma rodada em andamento recupera tabuleiro e turno sem modificar pontuação; em modo Computer, documente e teste se desfaz a dupla de jogadas. Teste histórico vazio e escolha explicitamente a política após o fim.</li>
+<li><strong>Adversário com Minimax.</strong> Troque a estratégia casual por uma função independente que avalie estados possíveis. Critério: o computador só escolhe casas livres e não perde contra nenhuma sequência legal de respostas. Faça uma verificação exaustiva, incluindo empates e terminal sem jogada.</li>
+<li><strong>Placar persistente.</strong> Crie uma interface de armazenamento e uma implementação local. Critério: reabrir restaura o placar; dados ausentes, inválidos ou falha de leitura têm comportamento definido. Teste primeiro com armazenamento em memória e mantenha o domínio livre de plugins.</li>
+<li><strong>Interface inclusiva com marcas próprias.</strong> Ofereça um tema de alto contraste e símbolos originais/licenciados. Critério: tamanho mínimo dos alvos, foco, teclado, texto ampliado e rótulos continuam funcionais; valide com leitor de tela e registre o dispositivo realmente utilizado. Não use personagens de terceiros sem autorização.</li>
+</ol>

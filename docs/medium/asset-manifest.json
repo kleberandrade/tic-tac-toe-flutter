@@ -1,0 +1,18 @@
+{
+  "cover": {
+    "path": "cover.png",
+    "kind": "conceptual illustration",
+    "method": "built-in image_gen tool",
+    "prompt": "Professional wide editorial cover for a Portuguese Flutter tic-tac-toe tutorial. Tactile paper-cut and subtle 3D shapes; a correct 3\u00d73 board, exactly three teal X across the top row and two terracotta O in the middle row, other cells empty. Warm ivory background, charcoal board edges, soft light, spacious composition; abstract blue folded-paper programming accent. No people, text, code, watermark or UI mockup."
+  },
+  "screenshots": [
+    {
+      "path": "../screenshots/desktop-win.jpg",
+      "method": "real Chrome release Web build, Flutter 3.50.0, local X win"
+    },
+    {
+      "path": "../screenshots/mobile-computer.jpg",
+      "method": "real Chrome release Web build, 390\u00d7844 viewport; not a physical phone"
+    }
+  ]
+}

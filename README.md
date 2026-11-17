@@ -1,7 +1,7 @@
 # Tic Tac Toe · Flutter
 
-[![Flutter 3.41.9](https://img.shields.io/badge/Flutter-3.41.9-02569B?logo=flutter)](https://docs.flutter.dev/)
-[![Dart 3.11.5](https://img.shields.io/badge/Dart-3.11.5-0175C2?logo=dart)](pubspec.yaml)
+[![Flutter 3.50.0](https://img.shields.io/badge/Flutter-3.50.0-02569B?logo=flutter)](https://docs.flutter.dev/)
+[![Dart 3.14.0](https://img.shields.io/badge/Dart-3.14.0-0175C2?logo=dart)](pubspec.yaml)
 [![MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Flutter checks](https://github.com/kleberandrade/tic-tac-toe-flutter/actions/workflows/flutter.yml/badge.svg?branch=master)](https://github.com/kleberandrade/tic-tac-toe-flutter/actions/workflows/flutter.yml)
 
@@ -11,7 +11,9 @@ A classroom game by **Kleber de Oliveira Andrade**, modernized with Material 3, 
 
 ## Requirements and setup
 
-The reproducible baseline is **Flutter 3.41.9 / Dart 3.11.5**, pinned in `.fvmrc` and CI. Use an SDK matching that release; FVM is optional. The manifest requires Dart >=3.11.0 <4.0.0 and Flutter >=3.41.9. Keep `pubspec.lock` committed. Runtime dependencies consist only of the Flutter SDK; Flutter lints and tests are development dependencies.
+The reproducible baseline is **Flutter 3.50.0 / Dart 3.14.0**, pinned in `.fvmrc` and CI. Use an SDK matching that release; FVM is optional. The manifest requires Dart >=3.14.0 <4.0.0 and Flutter >=3.50.0. Keep `pubspec.lock` committed. Runtime dependencies are the Flutter SDK and the official `material_ui` 1.11.1 package. Flutter lints 6.0.0 and SDK tests are development dependencies. Flutter 3.50 deprecates the old `package:flutter/material.dart` export; application and widget tests now import `package:material_ui/material_ui.dart`.
+
+All 27 hosted packages in the lockfile were compared with pub.dev on November 17, 2026. Twenty-five resolve to the latest stable registry version. Two are constrained by SDK pins: `material_color_utilities` 0.13.0 (registry 0.13.1) and `test_api` 0.7.14 (registry 0.7.15). No dependency override or SDK patch is used. See the [complete dependency audit](docs/medium/dependency-audit.json).
 
 ```sh
 git clone https://github.com/kleberandrade/tic-tac-toe-flutter.git
@@ -75,11 +77,11 @@ flutter build apk --debug
 
 The Web output is `build/web`; serve that directory over HTTP for release testing (for example `python3 -m http.server 8080 --directory build/web`). A Web build may download Flutter renderer/font resources on first load, so fully offline hosting requires additional asset configuration. This task does not deploy or publish the game.
 
-The local Xcode 27.2 / Flutter 3.41.9 combination failed the universal simulator framework architecture check in `flutter build ios --simulator --debug`. A concrete **arm64 simulator build passed** using the command below (select an available simulator from `xcrun simctl list devices available`). This was a build only, not an iOS runtime test:
+The local Xcode 27.2 / previous Flutter 3.41.9 combination failed the universal simulator framework architecture check in `flutter build ios --simulator --debug`. A concrete **arm64 simulator build also passed with Flutter 3.50.0** using the command below (select an available simulator from `xcrun simctl list devices available`). This was a build only, not an iOS runtime test:
 
 ```sh
 xcodebuild -project ios/Runner.xcodeproj -scheme Runner -configuration Debug \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   -derivedDataPath /tmp/tictactoe-xcode-build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES build
 ```
 
@@ -93,7 +95,7 @@ Android now uses the Flutter plugin DSL, Kotlin 2.2.20, AGP 8.11.1 and Gradle 8.
 
 ## Tutorial, credits and classroom extensions
 
-The [original Portuguese lesson](https://medium.com/@kleberandrade/criando-um-jogo-da-velha-em-flutter-50347537c926) teaches the 2020 implementation. See [its modernization notes](docs/medium-update.pt-BR.md) and [preserved original project material](docs/original-project.md), including historical screenshots and links. Those screenshots illustrate the earlier UI. Third-party teaching links remain attributed to their authors.
+The [updated Portuguese lesson](https://medium.com/@kleberandrade/criando-um-jogo-da-velha-em-flutter-50347537c926) accompanies this project. The [complete rewritten lesson source](docs/medium/article.pt-BR.html) includes a new conceptual cover, current browser screenshots, copyable code and exactly five concluding exercises. See the publication status below; the 2020 edition remains archived in this repository. See [its modernization notes](docs/medium-update.pt-BR.md) and [preserved original project material](docs/original-project.md), including historical screenshots and links. Those screenshots illustrate the earlier UI. Third-party teaching links remain attributed to their authors.
 
 Turn indication and session scores complete two original classroom challenges. Further exercises: persist scores with explicit tests, implement minimax, add a share action using a maintained package, or replace marks with original/licensed artwork while keeping semantic labels. The original `custom_splash` and `share` recommendations are historical references, not dependencies of this version. Avoid copyrighted character art without permission.
 

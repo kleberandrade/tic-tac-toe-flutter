@@ -3,16 +3,24 @@
     "path": "cover.png",
     "kind": "conceptual illustration",
     "method": "built-in image_gen tool",
-    "prompt": "Professional wide editorial cover for a Portuguese Flutter tic-tac-toe tutorial. Tactile paper-cut and subtle 3D shapes; a correct 3\u00d73 board, exactly three teal X across the top row and two terracotta O in the middle row, other cells empty. Warm ivory background, charcoal board edges, soft light, spacious composition; abstract blue folded-paper programming accent. No people, text, code, watermark or UI mockup."
+    "prompt": "Professional wide editorial cover for a Portuguese Flutter tic-tac-toe tutorial. Tactile paper-cut and subtle 3D shapes; a correct 3×3 board, exactly three teal X across the top row and two terracotta O in the middle row, other cells empty. Warm ivory background, charcoal board edges, soft light, spacious composition; abstract blue folded-paper programming accent. No people, text, code, watermark or UI mockup.",
+    "medium_url": "https://miro.medium.com/v2/resize:fit:700/0*AcPwtnoNL45jb9mL.png",
+    "alt": "Ilustração conceitual de um tabuleiro 3 por 3: três X verdes vencem na primeira linha; dois O laranja ocupam a segunda linha.",
+    "featured": true
   },
   "screenshots": [
     {
       "path": "../screenshots/desktop-win.jpg",
-      "method": "real Chrome release Web build, Flutter 3.50.0, local X win"
+      "method": "real Chrome release Web build, Flutter 3.50.0, local X win",
+      "medium_url": "https://miro.medium.com/v2/resize:fit:700/0*EqPiEdtUW1Z4U52Z.jpg",
+      "alt": "Captura real do jogo no Chrome: X vence na primeira linha destacada, o placar marca uma vitória de X e o botão Play again permite outra rodada."
     },
     {
       "path": "../screenshots/mobile-computer.jpg",
-      "method": "real Chrome release Web build, 390\u00d7844 viewport; not a physical phone"
+      "method": "real Chrome release Web build, 390×844 viewport; not a physical phone",
+      "medium_url": "https://miro.medium.com/v2/resize:fit:390/0*ZMMWI1p7acGY1r2g.jpg",
+      "alt": "Captura real do jogo em largura móvel: modo Computer ativo, X no canto superior esquerdo, O no centro e placares zerados."
     }
-  ]
+  ],
+  "publication_import_method": "Imported from the project public GitHub asset URLs using the Medium editor; Medium stores the images on its own CDN. No native file-picker workaround or permission change was used."
 }

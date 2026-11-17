@@ -1,0 +1,42 @@
+{
+  "exercises": [
+    "Escolha de quem começa. Permita escolher X ou O antes da rodada. Critério: a opção aparece na interface, alternância e resultado continuam corretos, e há testes para ambos os jogadores iniciando. Defina se reiniciar preserva a escolha.",
+    "Desfazer a última jogada. Acrescente um histórico no domínio e um botão Desfazer. Critério: uma rodada em andamento recupera tabuleiro e turno sem modificar pontuação; em modo Computer, documente e teste se desfaz a dupla de jogadas. Teste histórico vazio e escolha explicitamente a política após o fim.",
+    "Adversário com Minimax. Troque a estratégia casual por uma função independente que avalie estados possíveis. Critério: o computador só escolhe casas livres e não perde contra nenhuma sequência legal de respostas. Faça uma verificação exaustiva, incluindo empates e terminal sem jogada.",
+    "Placar persistente. Crie uma interface de armazenamento e uma implementação local. Critério: reabrir restaura o placar; dados ausentes, inválidos ou falha de leitura têm comportamento definido. Teste primeiro com armazenamento em memória e mantenha o domínio livre de plugins.",
+    "Interface inclusiva com marcas próprias. Ofereça um tema de alto contraste e símbolos originais/licenciados. Critério: tamanho mínimo dos alvos, foco, teclado, texto ampliado e rótulos continuam funcionais; valide com leitor de tela e registre o dispositivo realmente utilizado. Não use personagens de terceiros sem autorização."
+  ],
+  "images": [
+    {
+      "alt": "Ilustração conceitual de um tabuleiro 3 por 3: três X verdes vencem na primeira linha; dois O laranja ocupam a segunda linha.",
+      "loaded": true,
+      "src": "https://miro.medium.com/v2/resize:fit:700/0*AcPwtnoNL45jb9mL.png"
+    },
+    {
+      "alt": "Captura real do jogo no Chrome: X vence na primeira linha destacada, o placar marca uma vitória de X e o botão Play again permite outra rodada.",
+      "loaded": true,
+      "src": "https://miro.medium.com/v2/resize:fit:700/0*EqPiEdtUW1Z4U52Z.jpg"
+    },
+    {
+      "alt": "Captura real do jogo em largura móvel: modo Computer ativo, X no canto superior esquerdo, O no centro e placares zerados.",
+      "loaded": true,
+      "src": "https://miro.medium.com/v2/resize:fit:390/0*ZMMWI1p7acGY1r2g.jpg"
+    }
+  ],
+  "placeholders": false,
+  "title": "Criando um jogo da velha (Tic Tac Toe) com Flutter",
+  "url": "https://medium.com/flutter-comunidade-br/criando-um-jogo-da-velha-em-flutter-50347537c926",
+  "verified_date": "2026-11-17",
+  "code_blocks": 8,
+  "code_exact_matches": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "featured_image": "https://miro.medium.com/v2/resize:fit:1200/0*AcPwtnoNL45jb9mL.png"
+}

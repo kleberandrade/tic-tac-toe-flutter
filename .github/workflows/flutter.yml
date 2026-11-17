@@ -1,0 +1,23 @@
+name: Flutter checks
+on:
+  push:
+    branches: [master]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.9'
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: dart format --output=none --set-exit-if-changed lib test tool
+      - run: flutter analyze --fatal-infos
+      - run: dart run tool/rules_example.dart
+      - run: flutter test --coverage
+      - run: flutter build web
